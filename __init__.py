@@ -4,12 +4,7 @@ from lnbits.helpers import template_renderer
 
 db = Database("ext_chapsmart")
 
-chapsmart_static_files = [
-    {
-        "path": "/chapsmart/static",
-        "name": "chapsmart_static",
-    }
-]
+chapsmart_static_files = []
 
 chapsmart_ext: APIRouter = APIRouter(prefix="/chapsmart", tags=["ChapSmart"])
 chapsmart_api_router: APIRouter = APIRouter(
