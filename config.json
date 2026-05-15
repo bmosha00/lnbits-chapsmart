@@ -1,0 +1,46 @@
+{
+    "name": "ChapSmart",
+    "short_description": "Bitcoin to M-Pesa via Lightning",
+    "tile": "https://raw.githubusercontent.com/bmosha00/lnbits-chapsmart/main/static/image/chapsmart.png",
+    "min_lnbits_version": "0.12.6",
+    "donate": "",
+    "contributors": [
+        {
+            "name": "ChapSmart Payments",
+            "link": "https://github.com/bmosha00"
+        }
+    ],
+    "images": [],
+    "description_md": "https://raw.githubusercontent.com/bmosha00/lnbits-chapsmart/main/description.md",
+    "license": "MIT",
+    "settings": [
+        {
+            "name": "chapsmart_api_key",
+            "title": "ChapSmart API Key",
+            "type": "string",
+            "default": "",
+            "description": "Your ChapSmart API key (starts with chp_). Contact ChapSmart to get one."
+        },
+        {
+            "name": "chapsmart_api_secret",
+            "title": "ChapSmart API Secret",
+            "type": "string",
+            "default": "",
+            "description": "Your ChapSmart API secret. Keep this safe."
+        },
+        {
+            "name": "chapsmart_account_number",
+            "title": "Account Number",
+            "type": "string",
+            "default": "",
+            "description": "Your ChapSmart account number (locked to your API key)."
+        },
+        {
+            "name": "chapsmart_api_url",
+            "title": "API URL",
+            "type": "string",
+            "default": "https://backend.chapsmart.com",
+            "description": "ChapSmart backend URL. Only change for testing."
+        }
+    ]
+}
