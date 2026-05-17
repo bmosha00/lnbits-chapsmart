@@ -2,7 +2,6 @@
 %} {% block page %}
 <div class="row q-col-gutter-md">
   <div class="col-12 col-md-7 q-gutter-y-md">
-    <!-- CASHOUT FORM -->
     <q-card>
       <q-card-section>
         <div class="row items-center">
@@ -30,59 +29,55 @@
         ></q-select>
 
         <q-input
-          v-model="form.phone_number"
+          v-model="formData.phone_number"
           label="M-Pesa Phone Number"
           placeholder="0740034110"
           hint="Vodacom only (074, 075, 076)"
           dense
           class="q-mb-md"
-          :rules="[val => !!val || 'Phone number required', val => /^0(74|75|76)\d{7}$/.test(val) || 'Invalid Vodacom number']"
         ></q-input>
 
         <q-input
-          v-model="form.recipient_name"
+          v-model="formData.recipient_name"
           label="Recipient Full Name"
           placeholder="Brian Mosha"
           hint="First and last name required"
           dense
           class="q-mb-md"
-          :rules="[val => !!val || 'Name required', val => val.trim().split(' ').length >= 2 || 'First and last name needed']"
         ></q-input>
 
         <q-input
-          v-model.number="form.amount_tzs"
+          v-model.number="formData.amount_tzs"
           label="Amount (TZS)"
           type="number"
           placeholder="2500"
-          hint="Min 2,500 — Max 1,000,000"
+          hint="Min 2,500 - Max 1,000,000"
           dense
           class="q-mb-md"
-          :rules="[val => val >= 2500 || 'Minimum 2,500 TZS', val => val <= 1000000 || 'Maximum 1,000,000 TZS']"
         ></q-input>
 
-        <!-- QUOTE DISPLAY -->
-        <q-card v-if="quote" flat bordered class="q-mb-md bg-grey-1">
+        <q-card v-if="quoteData" flat bordered class="q-mb-md">
           <q-card-section>
             <div class="row items-center justify-between">
               <div>
                 <div class="text-subtitle2">You pay</div>
-                <div class="text-h6 text-primary">{{ quote.amount_sats.toLocaleString() }} sats</div>
+                <div class="text-h6 text-primary">{% raw %}{{ quoteData.amount_sats }}{% endraw %} sats</div>
               </div>
               <q-icon name="arrow_forward" size="md" color="grey"></q-icon>
               <div class="text-right">
                 <div class="text-subtitle2">Recipient gets</div>
-                <div class="text-h6 text-positive">{{ form.amount_tzs.toLocaleString() }} TZS</div>
+                <div class="text-h6 text-positive">{% raw %}{{ formData.amount_tzs }}{% endraw %} TZS</div>
               </div>
             </div>
             <div class="text-caption text-grey q-mt-sm">
-              Fee: {{ quote.fee_sats }} sats ({{ quote.fee_percent }}%)
+              Fee: {% raw %}{{ quoteData.fee_sats }}{% endraw %} sats ({% raw %}{{ quoteData.fee_percent }}{% endraw %}%)
             </div>
           </q-card-section>
         </q-card>
 
         <div class="row q-gutter-sm">
           <q-btn
-            v-if="!quote"
+            v-if="!quoteData"
             label="Get Quote"
             color="primary"
             :loading="loadingQuote"
@@ -91,7 +86,7 @@
             outline
           ></q-btn>
           <q-btn
-            v-if="quote"
+            v-if="quoteData"
             label="Send M-Pesa"
             color="positive"
             icon="send"
@@ -99,32 +94,25 @@
             @click="sendCashout"
           ></q-btn>
           <q-btn
-            v-if="quote"
+            v-if="quoteData"
             label="Cancel"
             color="grey"
             flat
-            @click="quote = null"
+            @click="quoteData = null"
           ></q-btn>
         </div>
       </q-card-section>
     </q-card>
 
-    <!-- STATUS CARD -->
     <q-card v-if="lastCashout">
       <q-card-section>
         <div class="row items-center">
-          <q-icon
-            :name="statusIcon(lastCashout.status)"
-            :color="statusColor(lastCashout.status)"
-            size="md"
-            class="q-mr-sm"
-          ></q-icon>
           <div>
             <div class="text-subtitle1">
-              {{ lastCashout.amount_tzs.toLocaleString() }} TZS → {{ lastCashout.phone_number }}
+              {% raw %}{{ lastCashout.amount_tzs }}{% endraw %} TZS
             </div>
-            <div class="text-caption" :class="'text-' + statusColor(lastCashout.status)">
-              {{ statusText(lastCashout.status) }}
+            <div class="text-caption">
+              {% raw %}{{ lastCashout.status }}{% endraw %}
             </div>
           </div>
         </div>
@@ -133,7 +121,6 @@
   </div>
 
   <div class="col-12 col-md-5 q-gutter-y-md">
-    <!-- HISTORY -->
     <q-card>
       <q-card-section>
         <h5 class="text-subtitle1 q-my-none">
@@ -149,12 +136,8 @@
       <q-list v-else separator>
         <q-item v-for="c in cashouts" :key="c.id">
           <q-item-section>
-            <q-item-label>
-              {{ c.amount_tzs.toLocaleString() }} TZS → {{ c.phone_number }}
-            </q-item-label>
-            <q-item-label caption>
-              {{ c.amount_sats.toLocaleString() }} sats · {{ c.recipient_name }}
-            </q-item-label>
+            <q-item-label>{% raw %}{{ c.amount_tzs }}{% endraw %} TZS</q-item-label>
+            <q-item-label caption>{% raw %}{{ c.amount_sats }}{% endraw %} sats</q-item-label>
           </q-item-section>
           <q-item-section side>
             <q-badge :color="statusColor(c.status)" :label="c.status"></q-badge>
@@ -163,7 +146,6 @@
       </q-list>
     </q-card>
 
-    <!-- INFO -->
     <q-card>
       <q-card-section>
         <h5 class="text-subtitle1 q-my-none">
@@ -181,31 +163,28 @@
           </q-item>
           <q-item>
             <q-item-section avatar><q-icon name="looks_3" color="primary"></q-icon></q-item-section>
-            <q-item-section>Click Send — sats are deducted, M-Pesa arrives in seconds</q-item-section>
+            <q-item-section>Click Send - sats are deducted, M-Pesa arrives in seconds</q-item-section>
           </q-item>
         </q-list>
         <div class="text-caption text-grey q-mt-sm">
-          Fee: 2.2% · Min: 2,500 TZS · Vodacom M-Pesa only
+          Fee: 2.2% - Min: 2,500 TZS - Vodacom M-Pesa only
         </div>
       </q-card-section>
     </q-card>
   </div>
 </div>
-
 {% endblock %} {% block scripts %} {{ window_vars(user) }}
 <script>
-  new Vue({
-    el: '#vue',
-    mixins: [windowMixin],
+  window.app.mixin({
     data: function () {
       return {
         selectedWallet: null,
-        form: {
+        formData: {
           phone_number: '',
           recipient_name: '',
           amount_tzs: 2500,
         },
-        quote: null,
+        quoteData: null,
         loadingQuote: false,
         sending: false,
         lastCashout: null,
@@ -215,6 +194,7 @@
     },
     computed: {
       walletOptions: function () {
+        if (!this.g || !this.g.user || !this.g.user.wallets) return []
         return this.g.user.wallets.map(function (w) {
           return {
             label: w.name + ' (' + Math.floor(w.sat / 1000) + 'k sats)',
@@ -223,78 +203,70 @@
         })
       },
       isFormValid: function () {
+        if (!this.formData) return false
         return (
           this.selectedWallet &&
-          this.form.phone_number &&
-          /^0(74|75|76)\d{7}$/.test(this.form.phone_number) &&
-          this.form.recipient_name &&
-          this.form.recipient_name.trim().split(' ').length >= 2 &&
-          this.form.amount_tzs >= 2500 &&
-          this.form.amount_tzs <= 1000000
+          this.formData.phone_number &&
+          /^0(74|75|76)\d{7}$/.test(this.formData.phone_number) &&
+          this.formData.recipient_name &&
+          this.formData.recipient_name.trim().split(' ').length >= 2 &&
+          this.formData.amount_tzs >= 2500 &&
+          this.formData.amount_tzs <= 1000000
         )
       },
     },
     methods: {
       getQuote: async function () {
         this.loadingQuote = true
-        this.quote = null
+        this.quoteData = null
         try {
-          var wallet = this.g.user.wallets.find(w => w.id === this.selectedWallet)
+          var wallet = this.g.user.wallets.find(function(w) { return w.id === this.selectedWallet }.bind(this))
           var resp = await LNbits.api.request(
             'POST',
             '/chapsmart/api/v1/quote?phone_number=' +
-              encodeURIComponent(this.form.phone_number) +
+              encodeURIComponent(this.formData.phone_number) +
               '&recipient_name=' +
-              encodeURIComponent(this.form.recipient_name) +
+              encodeURIComponent(this.formData.recipient_name) +
               '&amount_tzs=' +
-              this.form.amount_tzs,
+              this.formData.amount_tzs,
             wallet.inkey
           )
           if (resp.data.error) {
-            LNbits.utils.notifyApiError(resp.data.error)
+            Quasar.Notify.create({type: 'negative', message: resp.data.error})
           } else {
-            this.quote = resp.data
+            this.quoteData = resp.data
           }
         } catch (e) {
           LNbits.utils.notifyApiError(e)
         }
         this.loadingQuote = false
       },
-
       sendCashout: async function () {
         this.sending = true
         try {
-          var wallet = this.g.user.wallets.find(w => w.id === this.selectedWallet)
+          var wallet = this.g.user.wallets.find(function(w) { return w.id === this.selectedWallet }.bind(this))
           var resp = await LNbits.api.request(
             'POST',
             '/chapsmart/api/v1/send',
             wallet.adminkey,
             {
               wallet: this.selectedWallet,
-              phone_number: this.form.phone_number,
-              recipient_name: this.form.recipient_name,
-              amount_tzs: this.form.amount_tzs,
+              phone_number: this.formData.phone_number,
+              recipient_name: this.formData.recipient_name,
+              amount_tzs: this.formData.amount_tzs,
             }
           )
           if (resp.data.error) {
-            LNbits.utils.notifyApiError(resp.data.error)
+            Quasar.Notify.create({type: 'negative', message: resp.data.error})
           } else {
-            this.$q.notify({
+            Quasar.Notify.create({
               type: 'positive',
-              message:
-                resp.data.amount_tzs.toLocaleString() +
-                ' TZS sent! M-Pesa is on the way.',
+              message: resp.data.amount_tzs + ' TZS sent! M-Pesa is on the way.',
               timeout: 5000,
             })
-            this.lastCashout = {
-              ...resp.data,
-              phone_number: this.form.phone_number,
-              recipient_name: this.form.recipient_name,
-            }
-            this.quote = null
-            // Start polling status
+            this.lastCashout = resp.data
+            this.quoteData = null
             this.pollStatus(resp.data.cashout_id, wallet.inkey)
-            // Refresh history
             this.loadCashouts()
           }
         } catch (e) {
@@ -302,93 +274,39 @@
         }
         this.sending = false
       },
-
       pollStatus: function (cashoutId, key) {
         var self = this
         if (this.pollInterval) clearInterval(this.pollInterval)
         this.pollInterval = setInterval(async function () {
           try {
-            var resp = await LNbits.api.request(
-              'GET',
-              '/chapsmart/api/v1/status/' + cashoutId,
-              key
-            )
+            var resp = await LNbits.api.request('GET', '/chapsmart/api/v1/status/' + cashoutId, key)
             if (resp.data.status === 'completed') {
               self.lastCashout.status = 'completed'
-              self.$q.notify({
-                type: 'positive',
-                message: 'M-Pesa delivered! ✅',
-                timeout: 5000,
-              })
+              Quasar.Notify.create({type: 'positive', message: 'M-Pesa delivered!'})
               clearInterval(self.pollInterval)
               self.loadCashouts()
             } else if (resp.data.status === 'failed') {
               self.lastCashout.status = 'failed'
-              self.$q.notify({
-                type: 'negative',
-                message: 'Cashout failed: ' + (resp.data.error || 'Unknown error'),
-                timeout: 8000,
-              })
               clearInterval(self.pollInterval)
               self.loadCashouts()
-            } else {
+            } else if (self.lastCashout) {
               self.lastCashout.status = resp.data.status
             }
-          } catch (e) {
-            console.log('Poll error:', e)
-          }
+          } catch (e) { console.log('Poll error:', e) }
         }, 5000)
       },
-
       loadCashouts: async function () {
         if (!this.selectedWallet) return
         try {
-          var wallet = this.g.user.wallets.find(w => w.id === this.selectedWallet)
-          var resp = await LNbits.api.request(
-            'GET',
-            '/chapsmart/api/v1/cashouts',
-            wallet.inkey
-          )
+          var wallet = this.g.user.wallets.find(function(w) { return w.id === this.selectedWallet }.bind(this))
+          if (!wallet) return
+          var resp = await LNbits.api.request('GET', '/chapsmart/api/v1/cashouts', wallet.inkey)
           this.cashouts = resp.data || []
-        } catch (e) {
-          console.log('History error:', e)
-        }
+        } catch (e) { console.log('History error:', e) }
       },
-
       statusColor: function (status) {
-        var map = {
-          pending: 'grey',
-          paying: 'info',
-          paid: 'primary',
-          settled: 'primary',
-          completed: 'positive',
-          failed: 'negative',
-        }
+        var map = { pending: 'grey', paying: 'info', paid: 'primary', settled: 'primary', completed: 'positive', failed: 'negative' }
         return map[status] || 'grey'
-      },
-
-      statusIcon: function (status) {
-        var map = {
-          pending: 'hourglass_empty',
-          paying: 'bolt',
-          paid: 'bolt',
-          settled: 'check_circle_outline',
-          completed: 'check_circle',
-          failed: 'error',
-        }
-        return map[status] || 'help'
-      },
-
-      statusText: function (status) {
-        var map = {
-          pending: 'Preparing...',
-          paying: 'Sending Lightning payment...',
-          paid: 'BTC received by ChapSmart. Processing M-Pesa...',
-          settled: 'BTC confirmed. Sending M-Pesa...',
-          completed: 'M-Pesa delivered! ✅',
-          failed: 'Failed',
-        }
-        return map[status] || status
       },
     },
     watch: {
@@ -397,7 +315,7 @@
       },
     },
     created: function () {
-      if (this.g.user.wallets.length > 0) {
+      if (this.g && this.g.user && this.g.user.wallets && this.g.user.wallets.length > 0) {
         this.selectedWallet = this.g.user.wallets[0].id
       }
     },

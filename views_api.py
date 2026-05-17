@@ -8,7 +8,7 @@ from lnbits.core.services import pay_invoice
 from lnbits.decorators import require_admin_key, require_invoice_key
 from lnbits.settings import settings
 
-from . import chapsmart_api_router
+from . import chapsmart_ext as chapsmart_api_router
 from .crud import create_cashout, get_cashout, get_cashouts, update_cashout
 from .models import CreateCashout
 
@@ -34,7 +34,7 @@ def _get_headers(s: dict) -> dict:
 # ──────────────────────────────────────────────
 # GET /api/v1/quote — get a fresh quote
 # ──────────────────────────────────────────────
-@chapsmart_api_router.post("/quote")
+@chapsmart_api_router.post("/api/v1/quote")
 async def api_quote(
     phone_number: str = Query(...),
     recipient_name: str = Query(...),
@@ -81,7 +81,7 @@ async def api_quote(
 # ──────────────────────────────────────────────
 # POST /api/v1/poll — refresh quote price
 # ──────────────────────────────────────────────
-@chapsmart_api_router.get("/poll/{quote_id}")
+@chapsmart_api_router.get("/api/v1/poll/{quote_id}")
 async def api_poll_quote(quote_id: str, wallet=Depends(require_invoice_key)):
     s = _get_settings()
     async with httpx.AsyncClient(timeout=30) as client:
@@ -105,7 +105,7 @@ async def api_poll_quote(quote_id: str, wallet=Depends(require_invoice_key)):
 # ──────────────────────────────────────────────
 # POST /api/v1/send — generate invoice, pay it, track status
 # ──────────────────────────────────────────────
-@chapsmart_api_router.post("/send")
+@chapsmart_api_router.post("/api/v1/send")
 async def api_send(data: CreateCashout, wallet=Depends(require_admin_key)):
     s = _get_settings()
     if not s["api_key"] or not s["api_secret"]:
@@ -209,7 +209,7 @@ async def api_send(data: CreateCashout, wallet=Depends(require_admin_key)):
 # ──────────────────────────────────────────────
 # GET /api/v1/status/{cashout_id} — check M-Pesa status
 # ──────────────────────────────────────────────
-@chapsmart_api_router.get("/status/{cashout_id}")
+@chapsmart_api_router.get("/api/v1/status/{cashout_id}")
 async def api_status(cashout_id: str, wallet=Depends(require_invoice_key)):
     cashout = await get_cashout(cashout_id)
     if not cashout:
@@ -267,7 +267,7 @@ async def api_status(cashout_id: str, wallet=Depends(require_invoice_key)):
 # ──────────────────────────────────────────────
 # GET /api/v1/cashouts — list user's cashout history
 # ──────────────────────────────────────────────
-@chapsmart_api_router.get("/cashouts")
+@chapsmart_api_router.get("/api/v1/cashouts")
 async def api_cashouts(wallet=Depends(require_invoice_key)):
     cashouts = await get_cashouts(wallet.wallet.id)
     return [c.dict() for c in cashouts]

@@ -7,10 +7,11 @@ db = Database("ext_chapsmart")
 chapsmart_static_files = []
 
 chapsmart_ext: APIRouter = APIRouter(prefix="/chapsmart", tags=["ChapSmart"])
-chapsmart_api_router: APIRouter = APIRouter(
-    prefix="/chapsmart/api/v1", tags=["ChapSmart API"]
-)
 
 
 def chapsmart_renderer():
     return template_renderer(["chapsmart/templates"])
+
+
+from .views import *  # noqa: F401,F403,E402
+from .views_api import *  # noqa: F401,F403,E402
