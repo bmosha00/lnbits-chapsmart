@@ -12,29 +12,36 @@ Bitcoin to M-Pesa via Lightning. Send TZS to any Vodacom M-Pesa number directly 
 
 ## Installation
 
-### From Extension Source URL
+### Step 1: Add Extension Source
 
-Add this URL to your LNbits instance:
+In LNbits admin panel:
 
-```
-Server → Server → Extension Sources → Add:
-https://raw.githubusercontent.com/bmosha00/lnbits-chapsmart/main/manifest.json
-```
+Settings → Extensions → Extension Sources → click **+** and add:
 
-Then go to **Extensions** and enable **ChapSmart**.
+    https://raw.githubusercontent.com/bmosha00/lnbits-chapsmart/main/manifest.json
 
-### Admin Configuration
+### Step 2: Install and Activate
 
-The LNbits admin must configure ChapSmart API credentials:
+Go to **Extensions** → find **ChapSmart** → click **INSTALL** → select latest version → toggle **Activated**.
 
-```
-Server → Server → Extension Settings → ChapSmart:
-  API Key: chp_xxx (from ChapSmart)
-  API Secret: xxx (from ChapSmart)
-  Account Number: xxx (from ChapSmart)
-```
+### Step 3: Configure API Credentials
 
-Contact ChapSmart at support@chapsmart.com to get API credentials.
+Add these to your LNbits `.env` file (or set as environment variables):
+
+    CHAPSMART_API_KEY=chp_your_api_key_here
+    CHAPSMART_API_SECRET=your_api_secret_here
+    CHAPSMART_ACCOUNT_NUMBER=your_account_number_here
+    CHAPSMART_API_URL=https://backend.chapsmart.com
+
+Then restart LNbits.
+
+Contact **support@chapsmart.com** to get API credentials.
+
+## Compatibility
+
+- **LNbits:** v1.5.4+ (Vue 3)
+- **Python:** 3.10+
+- **Database:** SQLite or PostgreSQL
 
 ## User Guide
 
@@ -42,19 +49,19 @@ Contact ChapSmart at support@chapsmart.com to get API credentials.
 2. Enter recipient's Vodacom M-Pesa number (074/075/076)
 3. Enter recipient's full name (first + last)
 4. Enter TZS amount (2,500 — 1,000,000)
-5. Click "Get Quote" to see the sats amount
-6. Click "Send M-Pesa" to confirm
+5. Click **Get Quote** to see the sats amount
+6. Click **Send M-Pesa** to confirm
 7. Wait for M-Pesa confirmation
 
 ## API Endpoints
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| POST | /api/v1/quote | Invoice key | Get sats quote for TZS amount |
-| GET | /api/v1/poll/{quote_id} | Invoice key | Refresh quote price |
-| POST | /api/v1/send | Admin key | Execute cashout (quote → pay → track) |
-| GET | /api/v1/status/{cashout_id} | Invoice key | Check M-Pesa delivery status |
-| GET | /api/v1/cashouts | Invoice key | List cashout history |
+| POST | /chapsmart/api/v1/quote | Invoice key | Get sats quote for TZS amount |
+| GET | /chapsmart/api/v1/poll/{quote_id} | Invoice key | Refresh quote price |
+| POST | /chapsmart/api/v1/send | Admin key | Execute cashout |
+| GET | /chapsmart/api/v1/status/{cashout_id} | Invoice key | Check M-Pesa delivery status |
+| GET | /chapsmart/api/v1/cashouts | Invoice key | List cashout history |
 
 ## Limits
 
@@ -74,3 +81,4 @@ MIT
 
 - [ChapSmart](https://chapsmart.com)
 - [LNbits](https://lnbits.com)
+- [GitHub](https://github.com/bmosha00/lnbits-chapsmart)
