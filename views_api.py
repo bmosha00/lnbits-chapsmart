@@ -13,13 +13,35 @@ from .crud import create_cashout, get_cashout, get_cashouts, update_cashout
 from .models import CreateCashout
 
 
-def _get_settings():
-    """Get ChapSmart settings from LNbits admin config."""
+async def _get_settings():
+    """Get ChapSmart settings from LNbits admin config or env."""
+    import os
+    import json
+    from lnbits.db import SQLITE
+
+    vals = {}
+    try:
+        from lnbits.core.db import db as core_db
+        for key in ["chapsmart_api_key", "chapsmart_api_secret", "chapsmart_account_number", "chapsmart_api_url"]:
+            row = await core_db.fetchone(
+                "SELECT value FROM system_settings WHERE id = :id",
+                {"id": key},
+            )
+            if row:
+                v = row.get("value", "") or row[0]
+                try:
+                    v = json.loads(v)
+                except Exception:
+                    pass
+                vals[key.replace("chapsmart_", "")] = v
+    except Exception:
+        pass
+
     return {
-        "api_key": getattr(settings, "chapsmart_api_key", ""),
-        "api_secret": getattr(settings, "chapsmart_api_secret", ""),
-        "account_number": getattr(settings, "chapsmart_account_number", ""),
-        "api_url": getattr(settings, "chapsmart_api_url", "https://backend.chapsmart.com"),
+        "api_key": vals.get("api_key", "") or os.environ.get("CHAPSMART_API_KEY", ""),
+        "api_secret": vals.get("api_secret", "") or os.environ.get("CHAPSMART_API_SECRET", ""),
+        "account_number": vals.get("account_number", "") or os.environ.get("CHAPSMART_ACCOUNT_NUMBER", ""),
+        "api_url": vals.get("api_url", "") or os.environ.get("CHAPSMART_API_URL", "https://backend.chapsmart.com"),
     }
 
 
@@ -41,7 +63,7 @@ async def api_quote(
     amount_tzs: int = Query(...),
     wallet=Depends(require_invoice_key),
 ):
-    s = _get_settings()
+    s = await _get_settings()
     if not s["api_key"] or not s["api_secret"]:
         return {"error": "ChapSmart is not configured. Ask the admin to set API credentials."}
 
@@ -83,7 +105,7 @@ async def api_quote(
 # ──────────────────────────────────────────────
 @chapsmart_api_router.get("/api/v1/poll/{quote_id}")
 async def api_poll_quote(quote_id: str, wallet=Depends(require_invoice_key)):
-    s = _get_settings()
+    s = await _get_settings()
     async with httpx.AsyncClient(timeout=30) as client:
         resp = await client.get(
             f"{s['api_url']}/api/v1/invoices/quote/{quote_id}",
@@ -107,7 +129,7 @@ async def api_poll_quote(quote_id: str, wallet=Depends(require_invoice_key)):
 # ──────────────────────────────────────────────
 @chapsmart_api_router.post("/api/v1/send")
 async def api_send(data: CreateCashout, wallet=Depends(require_admin_key)):
-    s = _get_settings()
+    s = await _get_settings()
     if not s["api_key"] or not s["api_secret"]:
         return {"error": "ChapSmart is not configured. Ask the admin to set API credentials."}
 
@@ -179,14 +201,14 @@ async def api_send(data: CreateCashout, wallet=Depends(require_admin_key)):
     logger.info(f"[ChapSmart] Paying bolt11: {amount_sats} sats for cashout {cashout.id}")
 
     try:
-        payment_hash = await pay_invoice(
+        payment = await pay_invoice(
             wallet_id=data.wallet,
             payment_request=bolt11,
             extra={"tag": "chapsmart", "cashout_id": cashout.id},
         )
         await update_cashout(
             cashout.id,
-            payment_hash=payment_hash,
+            payment_hash=payment.payment_hash,
             status="paid",
         )
         logger.info(f"[ChapSmart] ✅ Lightning paid: {amount_sats} sats. Invoice: {invoice_id}")
@@ -227,7 +249,7 @@ async def api_status(cashout_id: str, wallet=Depends(require_invoice_key)):
 
     # Poll ChapSmart backend for live status
     if cashout.invoice_id:
-        s = _get_settings()
+        s = await _get_settings()
         try:
             async with httpx.AsyncClient(timeout=15) as client:
                 resp = await client.get(
